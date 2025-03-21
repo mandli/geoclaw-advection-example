@@ -1,3 +1,20 @@
+# Clawpack
+.data
+*.data
+.output
+_output
+.plots
+_plots
+pyclaw.log
+xgeoclaw
+
+# Fortran
+*.o
+*.mod
+
+# MacOS
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
