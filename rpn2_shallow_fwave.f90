@@ -3,7 +3,10 @@ subroutine rpn2(ixy, maxm, num_eqn, num_waves, num_aux, num_ghost, num_cells, &
 
     use, intrinsic :: iso_fortran_env, only: real64
 
+    use amr_module, only: mcapa
     use geoclaw_module, only: g => grav, dry_tolerance, rho
+    use geoclaw_module, only: earth_radius, deg2rad
+    use storm_module, only: pressure_index
 
     implicit none 
     
@@ -23,10 +26,10 @@ subroutine rpn2(ixy, maxm, num_eqn, num_waves, num_aux, num_ghost, num_cells, &
     ! Locals
     integer :: i, k, normal_index, transverse_index
     real(kind=D) :: hl, ul, vl, hr, ur, vr, hbar, uhat, chat, db, dp
-    real(kind=D) :: color_L, color_R
-    real(kind=D) :: phil, phir, dry_state_l, dry_state_r
-    real(kind=D) :: R(4, 4)
-    real(kind=D) :: delta(3), beta(3)
+    real(kind=D) :: phil, phir, dry_state_l, dry_state_r, psi_L, psi_R
+    real(kind=D) :: R(4,4)
+    real(kind=D) :: delta(4), beta(4)
+    real(kind=D) :: dxdc
     
     
     ! Determine normal and tangential directions
@@ -55,14 +58,19 @@ subroutine rpn2(ixy, maxm, num_eqn, num_waves, num_aux, num_ghost, num_cells, &
         hl = qr(1, i - 1) * dry_state_l
         ul = qr(normal_index, i - 1) / qr(1, i - 1) * dry_state_l
         vl = qr(transverse_index, i - 1) / qr(1, i - 1) * dry_state_l
-        color_L = qr(4, i-1)
+        psi_L = qr(4, i - 1)
         phil = (0.5_D * g * hl**2 + hl * ul**2) * dry_state_l
+
+        ! Forcing
+        db = (auxl(1, i) - auxr(1, i - 1))
+        dp = 0.d0
+        ! dp = (auxl(pressure_index, i) - auxr(pressure_index, i - 1))
     
         ! Right states
         hr = ql(1, i) * dry_state_r
         ur = ql(normal_index, i) / ql(1, i) * dry_state_r
         vr = ql(transverse_index, i) / ql(1, i) * dry_state_r
-        color_R = ql(4, i)
+        psi_R= ql(4, i)
         phir = (0.5_D * g * hr**2 + hr * ur**2) * dry_state_r
 
         ! Roe average states (Roe's linearization)
@@ -74,7 +82,7 @@ subroutine rpn2(ixy, maxm, num_eqn, num_waves, num_aux, num_ghost, num_cells, &
         delta(1) = hr * ur - hl * ul
         delta(2) = phir - phil + g * hbar * db + hbar * dp / rho(1)
         delta(3) = hr * ur * vr - hl * ul * vl
-        delta(4) = color_R - color_L
+        delta(4) = psi_R - psi_L
     
         ! Wave speeds
         s(1, i) = min(uhat - chat, ul - sqrt(g * hl))
@@ -83,25 +91,19 @@ subroutine rpn2(ixy, maxm, num_eqn, num_waves, num_aux, num_ghost, num_cells, &
         s(4, i) = s(2, i)
         
         ! Right eigenvectors (columns)
+        R(4, :) = 0.0_D
         ! could possibly use vhat instead of vl and vr
         R(1, 1) = 1.0_D
         R(normal_index, 1) = s(1, i)
         R(transverse_index, 1) = vl
-        R(4, 1) = 0.0_D
         
         R(1, 2) = 0.0_D
         R(normal_index, 2) = 0.0
         R(transverse_index, 2) = 1.0
-        R(4, 2) = 0.0_D
         
         R(1, 3) = 1.0_D
         R(normal_index, 3) = s(3, i)
         R(transverse_index, 3) = vr
-        R(4, 3) = 0.0_D
-
-        ! Advective quantity
-        R(1:3, 4) = 0.0_D
-        R(4, 4) = 1.0_D
         
         ! Wave strengths
         beta(1) = (s(3, i) * delta(1) - delta(2)) / (s(3, i) - s(1, i))
@@ -113,6 +115,16 @@ subroutine rpn2(ixy, maxm, num_eqn, num_waves, num_aux, num_ghost, num_cells, &
         do k = 1, num_waves
             fwave(:, k, i) = beta(k) * R(:, k)
         enddo
+
+        ! Capacity Mapping
+        if (mcapa > 0) then
+            dxdc = merge(earth_radius * deg2rad,        &
+                         earth_radius * cos(auxl(3,i)) * deg2rad, &
+                         ixy == 1)
+
+            s(:, i) = dxdc * s(:, i)
+            fwave(:, :, i) = dxdc * fwave(:, :, i)
+        end if
     
         ! Fluctuations
         do k=1, num_waves

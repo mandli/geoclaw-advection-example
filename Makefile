@@ -20,7 +20,10 @@ SETPLOT_FILE = setplot.py      # File containing function to set plots
 PLOTDIR = _plots               # Directory for plots
 
 # Environment variable FC should be set to fortran compiler, e.g. gfortran
-FFLAGS ?=
+# NETCDF4_FORT_PREFIX = /opt/homebrew/Cellar/netcdf-fortran/4.6.1
+# FFLAGS += -DNETCDF -I$(NETCDF4_FORT_PREFIX)/include -L$(NETCDF4_FORT_PREFIX)/LIB
+# FFLAGS += -DNETCDF $(shell nf-config --fflags)
+# LFLAGS += $(FFLAGS) $(shell nf-config --flibs) $(shell nc-config --libs)
 
 # ---------------------------------
 # package sources for this program:
@@ -38,7 +41,6 @@ include $(GEOLIB)/Makefile.geoclaw
 EXCLUDE_MODULES = \
 
 EXCLUDE_SOURCES = \
-  qinit.f90
 
 # ----------------------------------------
 # List of custom sources for this program:
@@ -65,5 +67,3 @@ endif
 #-------------------------------------------------------------------
 # Include Makefile containing standard definitions and make options:
 include $(CLAWMAKE)
-
-### DO NOT remove this line - make depends on it ###

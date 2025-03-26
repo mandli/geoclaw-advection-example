@@ -23,7 +23,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     real(kind=8) :: x,y
     real(kind=8) :: veta(1-mbc:mx+mbc,1-mbc:my+mbc)
     real(kind=8) :: ddxy
-    real(kind=8) :: z, x0(2), A, sigma
+    real(kind=8) :: r, psi, x0(2), A, sigma
     
     q = 0.d0   ! initialize all elements to 0
     
@@ -71,18 +71,16 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     endif
 
     ! Initialize advective field
-    x0 = [0.d0, 0.d0]
-    A = 40.d0
-    sigma = 10.d0
+    x0 = [-70.d0, 35.d0]
+    A = 1.d0
+    sigma = 1.d0
     do i=1, mx
         x = xlower + (i-0.5d0)*dx
         do j=1, my
             y = ylower + (j-0.5d0)*dy
 
-            z = -((x - x0(1))**2 + (y - x0(2))**2) / 10.d0
-            if (z > -10.d0) then
-                q(4, i, j) = A * exp(z)
-            end if
+            r = sqrt((x - x0(1))**2 + (y - x0(1))**2)
+            q(4, i, j) = A * exp(-r**2 / sigma**2) * q(1, i, j)
         end do
     end do
     
