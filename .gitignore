@@ -7,6 +7,7 @@ _output
 _plots
 pyclaw.log
 xgeoclaw
+sandy.storm
 
 # Fortran
 *.o
