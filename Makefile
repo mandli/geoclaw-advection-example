@@ -53,6 +53,7 @@ MODULES = \
 SOURCES = \
   $(RIEMANN)/rpt2_geoclaw.f \
   $(RIEMANN)/geoclaw_riemann_utils.f \
+  ./valout.f90 \
   ./qinit.f90
 
 RP ?= simple

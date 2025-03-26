@@ -79,8 +79,11 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
         do j=1, my
             y = ylower + (j-0.5d0)*dy
 
-            r = sqrt((x - x0(1))**2 + (y - x0(1))**2)
-            q(4, i, j) = A * exp(-r**2 / sigma**2) * q(1, i, j)
+            r = sqrt((x - x0(1))**2 + (y - x0(2))**2)
+            q(4, i, j) = A * exp(-r**2 / sigma**2)
+            if (q(4, i, j) > 0.5d0) then
+                print "(i3, i3, D25.16)", i, j, q(4, i, j)
+            end if
         end do
     end do
     

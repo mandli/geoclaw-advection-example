@@ -119,7 +119,7 @@ def setplot(plotdata=None):
 
     # Advective field
     plotfigure = plotdata.new_plotfigure(name="Advected Quantity")
-    plotfigure.show = (clawdata.num_eqn == 4)
+    plotfigure.show = (clawdata.num_eqn > 3)
     plotaxes = plotfigure.new_plotaxes()
     plotaxes.title = r"$\psi$"
     plotaxes.xlimits = regions['Full Domain']['xlimits']

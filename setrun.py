@@ -136,7 +136,7 @@ def setrun(claw_pkg='geoclaw'):
         clawdata.total_steps = 10
         clawdata.output_t0 = True
 
-    clawdata.output_format = 'binary'      # 'ascii' or 'binary'
+    clawdata.output_format = 'ascii'      # 'ascii' or 'binary'
     clawdata.output_q_components = 'all'   # could be list such as [True,True]
     clawdata.output_aux_components = 'all'
     clawdata.output_aux_onlyonce = False    # output aux arrays only at t0
