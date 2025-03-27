@@ -167,8 +167,10 @@ def setrun(claw_pkg='geoclaw'):
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
-    clawdata.cfl_desired = 0.75
-    clawdata.cfl_max = 1.0
+    # clawdata.cfl_desired = 0.75
+    # clawdata.cfl_max = 1.0
+    clawdata.cfl_desired = 0.45
+    clawdata.cfl_max = 0.5
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 2**16
@@ -178,7 +180,7 @@ def setrun(claw_pkg='geoclaw'):
     # ------------------
 
     # Order of accuracy:  1 => Godunov,  2 => Lax-Wendroff plus limiters
-    clawdata.order = 2
+    clawdata.order = 1
 
     # Use dimensional splitting? (not yet available for AMR)
     clawdata.dimensional_split = 'unsplit'
@@ -187,7 +189,7 @@ def setrun(claw_pkg='geoclaw'):
     #  0 or 'none'      ==> donor cell (only normal solver used)
     #  1 or 'increment' ==> corner transport of waves
     #  2 or 'all'       ==> corner transport of 2nd order corrections too
-    clawdata.transverse_waves = 2
+    clawdata.transverse_waves = 0
 
     # Number of waves in the Riemann solution:
     # clawdata.num_waves = 3
@@ -311,36 +313,9 @@ def setrun(claw_pkg='geoclaw'):
 
     # == setregions.data values ==
     regions = rundata.regiondata.regions
-    # to specify regions of refinement append lines of the form
-    #  [minlevel,maxlevel,t1,t2,x1,x2,y1,y2]
-    # Entire domain
-    # regions.append([1, 4, clawdata.t0, clawdata.tfinal, 
-    #                       clawdata.lower[0], clawdata.upper[0], 
-    #                       clawdata.lower[1], clawdata.upper[1]])
-    # # NYC Region
-    # regions.append([1, 7, clawdata.t0, clawdata.tfinal, 
-    #                       -74.5, -73.5, 40.3, 41.0])
 
-    # regions.append([5, 6, clawdata.t0, clawdata.tfinal, -74.25,-73.5,40.5,41]) # refine gauge 1,2,3
-    # regions.append([5, 6, clawdata.t0, clawdata.tfinal, -73.25,-72.75,41,41.5]) # refine gauge 4,5
-    # regions.append([6, 7, clawdata.t0, clawdata.tfinal, -72.25,-72,41,41.5]) # refine gauge 6
-
-
-    # =============================================================================================================== #
-
-    # 8518750 Battery gauge
-    rundata.gaugedata.gauges.append([1,-74.013,40.7,clawdata.t0,clawdata.tfinal])
-    # 8516945 Kings point gauge
-    rundata.gaugedata.gauges.append([2,-73.77,40.81,clawdata.t0,clawdata.tfinal])
-    # 8510560 Montauk, NY
-    rundata.gaugedata.gauges.append([3,-71.96,41.04833,clawdata.t0,clawdata.tfinal])
-    # 8467150 Bridgeport, CT
-    rundata.gaugedata.gauges.append([4,-73.1816666667,41.1733333333,clawdata.t0,clawdata.tfinal])
-    # 8465705 New Haven, CT
-    rundata.gaugedata.gauges.append([5,-72.915152,41.2235,clawdata.t0,clawdata.tfinal])
-    # 8461490 New London, CT
-    rundata.gaugedata.gauges.append([6,-72.09,41.3716666667,clawdata.t0,clawdata.tfinal])
-    
+    # Gauges
+    gauges = rundata.gaugedata.gauges
     # Force the gauges to also record the wind and pressure fields
     # rundata.gaugedata.aux_out_fields = [4, 5, 6]
 
@@ -399,59 +374,13 @@ def setgeo(rundata):
     topo_data.shelf_depth = -100.0
     topo_data.beach_slope = 0.05
 
-
-    # topo_data.topofiles = []
-    # for topography, append lines of the form
-    #   [topotype, fname]
-    # See regions for control over these regions, need better bathy data for
-    # the smaller domains
-    topo_dir = os.path.join(os.environ["DATA_PATH"], "topography")
-    # topo_data.topofiles.append([3, os.path.join(topo_dir, 'atlantic_1min.tt3')])
-    # topo_data.topofiles.append([3, os.path.join(topo_dir, 'newyork_3s.tt3')])
-    # topo_data.topofiles.append([4, os.path.join(topo_dir, 
-    #                                             "GEBCO", "GEBCO_2023.nc")])
-    ncei_base_path = os.path.join(topo_dir, "ny_area", "ncei19_ny")
-    ncei_file_list = ["ncei19_n40x50_w074x00_2018v2.nc",
-                      "ncei19_n40x50_w074x25_2018v2.nc",
-                      "ncei19_n40x75_w073x00_2015v1.nc",
-                      "ncei19_n40x75_w073x25_2015v1.nc",
-                      "ncei19_n40x75_w073x50_2015v1.nc",
-                      "ncei19_n40x75_w073x75_2015v1.nc",
-                      "ncei19_n40x75_w074x00_2015v1.nc",
-                      "ncei19_n40x75_w074x25_2015v1.nc",
-                      "ncei19_n41x00_w072x25_2015v1.nc",
-                      "ncei19_n41x00_w072x50_2015v1.nc",
-                      "ncei19_n41x00_w072x75_2015v1.nc",
-                      "ncei19_n41x00_w073x00_2015v1.nc",
-                      "ncei19_n41x00_w073x25_2015v1.nc",
-                      "ncei19_n41x00_w073x50_2015v1.nc",
-                      "ncei19_n41x00_w073x75_2015v1.nc",
-                      "ncei19_n41x00_w074x00_2015v1.nc",
-                      "ncei19_n41x00_w074x25_2015v1.nc",
-                      "ncei19_n41x25_w072x00_2015v1.nc",
-                      "ncei19_n41x25_w072x25_2015v1.nc",
-                      "ncei19_n41x25_w072x50_2015v1.nc",
-                      "ncei19_n41x25_w072x75_2015v1.nc",
-                      "ncei19_n41x25_w073x00_2016v1.nc",
-                      "ncei19_n41x25_w073x25_2016v1.nc",
-                      "ncei19_n41x25_w073x50_2015v1.nc",
-                      "ncei19_n41x25_w073x75_2015v1.nc",
-                      "ncei19_n41x25_w074x00_2015v1.nc",
-                      "ncei19_n41x50_w072x00_2016v1.nc",
-                      "ncei19_n41x50_w072x25_2016v1.nc",
-                      "ncei19_n41x50_w072x50_2016v1.nc",
-                      "ncei19_n41x50_w072x75_2016v1.nc",
-                      "ncei19_n41x50_w073x00_2016v1.nc"]
-    # for file_name in ncei_file_list:
-    #     topo_data.topofiles.append([4, os.path.join(ncei_base_path, file_name)])
-
     # ================
     #  Set Surge Data
     # ================
     data = rundata.surge_data
 
     # Source term controls
-    data.wind_forcing = True
+    data.wind_forcing = False
     data.drag_law = 1
     data.pressure_forcing = True
 

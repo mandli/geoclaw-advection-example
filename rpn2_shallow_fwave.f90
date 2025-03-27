@@ -6,7 +6,7 @@ subroutine rpn2(ixy, maxm, num_eqn, num_waves, num_aux, num_ghost, num_cells, &
     use amr_module, only: mcapa
     use geoclaw_module, only: g => grav, dry_tolerance, rho
     use geoclaw_module, only: earth_radius, deg2rad
-    use storm_module, only: pressure_index
+    use storm_module, only: pressure_forcing, pressure_index
 
     implicit none 
     
@@ -63,8 +63,8 @@ subroutine rpn2(ixy, maxm, num_eqn, num_waves, num_aux, num_ghost, num_cells, &
 
         ! Forcing
         db = (auxl(1, i) - auxr(1, i - 1))
-        dp = 0.d0
-        ! dp = (auxl(pressure_index, i) - auxr(pressure_index, i - 1))
+        dp = merge(auxl(pressure_index, i) - auxr(pressure_index, i - 1), 0.0_D,    &
+                   pressure_forcing)
     
         ! Right states
         hr = ql(1, i) * dry_state_r
@@ -82,16 +82,17 @@ subroutine rpn2(ixy, maxm, num_eqn, num_waves, num_aux, num_ghost, num_cells, &
         delta(1) = hr * ur - hl * ul
         delta(2) = phir - phil + g * hbar * db + hbar * dp / rho(1)
         delta(3) = hr * ur * vr - hl * ul * vl
-        delta(4) = psi_R - psi_L
+        ! delta(4) = psi_R - psi_L
+        delta(4) = 0.0_D
     
         ! Wave speeds
         s(1, i) = min(uhat - chat, ul - sqrt(g * hl))
         s(3, i) = max(uhat + chat, ur + sqrt(g * hr))
         s(2, i) = 0.5_D * (s(1, i) + s(3, i))
-        s(4, i) = s(2, i)
+        s(4, i) = 0.0_D
         
         ! Right eigenvectors (columns)
-        R(4, :) = 0.0_D
+        R(4, :) = [0.0_D, 0.0_D, 0.0_D, 0.0_D]
         ! could possibly use vhat instead of vl and vr
         R(1, 1) = 1.0_D
         R(normal_index, 1) = s(1, i)
@@ -109,6 +110,7 @@ subroutine rpn2(ixy, maxm, num_eqn, num_waves, num_aux, num_ghost, num_cells, &
         beta(1) = (s(3, i) * delta(1) - delta(2)) / (s(3, i) - s(1, i))
         beta(3) = (delta(2) - s(1, i) * delta(1)) / (s(3, i) - s(1, i))
         beta(2) = delta(3) - beta(1) * vl - beta(3) * vr
+        ! beta(4) = delta(4)
         beta(4) = 0.0_D
 
         ! f-waves
@@ -116,15 +118,35 @@ subroutine rpn2(ixy, maxm, num_eqn, num_waves, num_aux, num_ghost, num_cells, &
             fwave(:, k, i) = beta(k) * R(:, k)
         enddo
 
-        ! Capacity Mapping
-        if (mcapa > 0) then
-            dxdc = merge(earth_radius * deg2rad,        &
-                         earth_radius * cos(auxl(3,i)) * deg2rad, &
-                         ixy == 1)
+        ! Capacity Mapping - assumes lat-long grid
+        dxdc = merge(merge(earth_radius * deg2rad,              &
+                     earth_radius * cos(auxl(3,i)) * deg2rad,   &
+                     ixy == 1),                                 &
+                     1.0_D, mcapa > 0)                 
+        s(:, i) = dxdc * s(:, i)
+        fwave(:, :, i) = dxdc * fwave(:, :, i)
+        ! if (mcapa > 0) then
+        !     dxdc = merge(earth_radius * deg2rad,        &
+        !                  earth_radius * cos(auxl(3,i)) * deg2rad, &
+        !                  ixy == 1)
 
-            s(:, i) = dxdc * s(:, i)
-            fwave(:, :, i) = dxdc * fwave(:, :, i)
-        end if
+        !     s(:, i) = dxdc * s(:, i)
+        !     fwave(:, :, i) = dxdc * fwave(:, :, i)
+        ! end if
+        ! if (mcapa > 0) then
+        !     if (ixy == 1) then
+        !         dxdc = earth_radius * deg2rad
+        !     else
+        !         dxdc = earth_radius * cos(auxl(3,i)) * deg2rad
+        !     endif
+
+        !     do k = 1, num_waves
+        !         s(k,i) = dxdc * s(k,i)
+        !         fwave(1,k,i) = dxdc * fwave(1,k,i)
+        !         fwave(2,k,i) = dxdc * fwave(2,k,i)
+        !         fwave(3,k,i) = dxdc * fwave(3,k,i)
+        !     enddo
+        ! endif
     
         ! Fluctuations
         do k=1, num_waves
