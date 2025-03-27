@@ -51,8 +51,7 @@ RIEMANN = $(CLAW)/riemann/src
 MODULES = \
 
 SOURCES = \
-  $(RIEMANN)/rpt2_geoclaw.f \
-  $(RIEMANN)/geoclaw_riemann_utils.f \
+  ./rpt2_geoclaw.f \
   ./valout.f90 \
   ./src2.f90 \
   ./qinit.f90
@@ -62,6 +61,7 @@ ifeq ($(RP), simple)
   SOURCES += ./rpn2_shallow_fwave.f90
 else ifeq ($(RP), geoclaw)
   SOURCES += $(RIEMANN)/rpn2_geoclaw.f
+  SOURCES += $(RIEMANN)/geoclaw_riemann_utils.f
 else
   $(error Invalid Riemann solver $(RP))
 endif
